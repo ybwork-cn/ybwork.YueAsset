@@ -14,6 +14,7 @@ namespace ybwork.Assets.Editor
 {
     internal class AssetCollectorWindow : EditorWindow
     {
+        private const string _jsonFilename = "Assets/Settings/AssetCollectorData.alias.json";
         private static AssetCollectorWindow _window;
         private AssetCollectorData _data;
 
@@ -252,19 +253,14 @@ namespace ybwork.Assets.Editor
             EditorUtility.SetDirty(_data);
             AssetDatabase.SaveAssets();
 
-            var filename = AssetDatabase.GetAssetPath(_data);
-            var jsonFileName = Path.GetDirectoryName(filename) + "/" + Path.GetFileNameWithoutExtension(filename) + ".paths.json";
             string contents = JsonConvert.SerializeObject(_data.GetAssetPaths(), Formatting.Indented);
-            File.WriteAllText(jsonFileName, contents + "\r\n");
+            File.WriteAllText(_jsonFilename, contents + "\r\n");
         }
 
         private void Build()
         {
             SaveData();
-
-            var filename = AssetDatabase.GetAssetPath(_data);
-            var jsonFileName = Path.GetDirectoryName(filename) + "/" + Path.GetFileNameWithoutExtension(filename) + ".paths.json";
-            AssetBuilder.BuildAssetBundle(_data, jsonFileName);
+            AssetBuilder.BuildAssetBundle(_data, _jsonFilename);
         }
 
         private static void RebuildListView(ListView listView)
