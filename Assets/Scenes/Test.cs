@@ -8,7 +8,9 @@ public class Test : MonoBehaviour
     async void Start()
     {
         await AssetMgr.InitAsync();
-        AssetMgr.SetDefaultGroup("DefaultPackage");
+        AssetMgr.SetDefaultPackage("DefaultPackage");
         Instantiate(AssetMgr.LoadAssetSync<GameObject>("New Prefab"));
+
+        Instantiate(AssetMgr.GetPackage("aa").LoadAssetSync<GameObject>("Capsule"));
     }
 }

@@ -4,6 +4,23 @@
       "Name": "New Prefab",
       "BundleName": "DefaultGroup",
       "AssetPath": "Assets/Scenes/New Prefab.prefab"
+    },
+    {
+      "Name": "AssetCollectorData.alias",
+      "BundleName": "DefaultGroup",
+      "AssetPath": "Assets/Settings/AssetCollectorData.alias.json"
+    },
+    {
+      "Name": "AssetCollectorData",
+      "BundleName": "DefaultGroup",
+      "AssetPath": "Assets/Settings/AssetCollectorData.asset"
+    }
+  ],
+  "aa": [
+    {
+      "Name": "Capsule",
+      "BundleName": "DefaultGroup",
+      "AssetPath": "Assets/Scenes/Capsule.prefab"
     }
   ]
 }

@@ -19,3 +19,9 @@ MonoBehaviour:
     - GroupName: DefaultGroup
       Items:
       - AssetGUID: f8889534df30c254f8bc2da90c69ad77
+      - AssetGUID: 77ecc6441b8faaa46b778c1ce40d1bfd
+  - PackageName: aa
+    Groups:
+    - GroupName: DefaultGroup
+      Items:
+      - AssetGUID: 2945ac00a82ccfe4a89be5b71c0d91f2
