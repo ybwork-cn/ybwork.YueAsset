@@ -1,0 +1,9 @@
+{
+  "DefaultPackage": [
+    {
+      "Name": "New Prefab",
+      "BundleName": "DefaultGroup",
+      "AssetPath": "Assets/Scenes/New Prefab.prefab"
+    }
+  ]
+}
