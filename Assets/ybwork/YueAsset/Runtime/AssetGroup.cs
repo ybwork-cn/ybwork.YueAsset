@@ -5,13 +5,13 @@ using UnityEngine;
 
 namespace ybwork.Assets
 {
-    public abstract class AssetGroup
+    public abstract class AssetPackage
     {
-        public readonly string GroupName;
+        public readonly string PackageName;
 
-        internal AssetGroup(string groupName)
+        internal AssetPackage(string packageName)
         {
-            GroupName = groupName;
+            PackageName = packageName;
         }
 
         public abstract void InitSync();
@@ -19,14 +19,14 @@ namespace ybwork.Assets
         public abstract T LoadAssetSync<T>(string id) where T : Object;
     }
 
-    internal class AssetGroup_Release : AssetGroup
+    internal class AssetPackage_Release : AssetPackage
     {
         private readonly Dictionary<string, AssetBundle> _assetBundles = new();
         private readonly Dictionary<string, AssetBundle> _assetPaths = new();
         private readonly List<AssetAlias> _assets;
         private bool _inited = false;
 
-        internal AssetGroup_Release(string groupName, List<AssetAlias> assets) : base(groupName)
+        internal AssetPackage_Release(string groupName, List<AssetAlias> assets) : base(groupName)
         {
             _assets = assets;
         }
@@ -39,7 +39,7 @@ namespace ybwork.Assets
             var bundleNames = _assets.GroupBy(asset => asset.BundleName).Select(group => group.Key);
             foreach (var bundleName in bundleNames)
             {
-                string path = AssetMgr.AssetBundlePath + GroupName + "/" + bundleName;
+                string path = AssetMgr.AssetBundlePath + PackageName + "/" + bundleName;
                 _assetBundles[bundleName] = AssetBundle.LoadFromFile(path + ".ab");
             }
 
@@ -59,7 +59,7 @@ namespace ybwork.Assets
             var bundleNames = _assets.GroupBy(asset => asset.BundleName).Select(group => group.Key);
             foreach (var bundleName in bundleNames)
             {
-                string path = AssetMgr.AssetBundlePath + GroupName + "/" + bundleName;
+                string path = AssetMgr.AssetBundlePath + PackageName + "/" + bundleName;
                 var assetBundleCreateRequest = await AssetBundle.LoadFromFileAsync(path + ".ab");
                 _assetBundles[bundleName] = assetBundleCreateRequest.assetBundle;
             }
@@ -80,11 +80,11 @@ namespace ybwork.Assets
         }
     }
 
-    internal class AssetGroup_Editor : AssetGroup
+    internal class AssetPackage_Editor : AssetPackage
     {
         private readonly Dictionary<string, string> _assetPaths = new();
 
-        internal AssetGroup_Editor(string groupName, List<AssetAlias> assets) : base(groupName)
+        internal AssetPackage_Editor(string groupName, List<AssetAlias> assets) : base(groupName)
         {
             foreach (AssetAlias asset in assets)
             {

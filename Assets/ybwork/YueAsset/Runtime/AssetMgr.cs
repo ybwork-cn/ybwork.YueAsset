@@ -10,38 +10,38 @@ namespace ybwork.Assets
     {
         public static readonly string AssetBundlePath = Application.streamingAssetsPath + "/Bundles/";
         public const string AliasPath = "Assets/Settings/AssetCollectorData.alias.json";
-        private static AssetGroup _defaultAssetGroup = null;
-        private static readonly Dictionary<string, AssetGroup> _assetGroups = new();
+        private static AssetPackage _defaultAssetPackage = null;
+        private static readonly Dictionary<string, AssetPackage> _assetPackages = new();
 
         public static void InitSync()
         {
-            LoadGroups();
-            foreach (AssetGroup group in _assetGroups.Values)
-                group.InitSync();
+            LoadPackages();
+            foreach (AssetPackage package in _assetPackages.Values)
+                package.InitSync();
         }
 
         public static async Task InitAsync()
         {
-            LoadGroups();
-            foreach (AssetGroup group in _assetGroups.Values)
-                await group.InitAsync();
+            LoadPackages();
+            foreach (AssetPackage package in _assetPackages.Values)
+                await package.InitAsync();
         }
 
-        public static void SetDefaultGroup(string defaultGroupName)
+        public static void SetDefaultPackage(string defaultPackageName)
         {
-            _defaultAssetGroup = GetGroup(defaultGroupName);
+            _defaultAssetPackage = GetPackage(defaultPackageName);
         }
 
-        public static AssetGroup GetGroup(string groupName)
+        public static AssetPackage GetPackage(string packageName)
         {
-            _assetGroups.TryGetValue(groupName, out AssetGroup group);
-            return group;
+            _assetPackages.TryGetValue(packageName, out AssetPackage package);
+            return package;
         }
 
         public static T LoadAssetSync<T>(string id) where T : Object
         {
-            CheckDefaultGroup();
-            return _defaultAssetGroup.LoadAssetSync<T>(id);
+            CheckDefaultPackage();
+            return _defaultAssetPackage.LoadAssetSync<T>(id);
         }
 
         private static Dictionary<string, List<AssetAlias>> LoadAlias()
@@ -56,24 +56,24 @@ namespace ybwork.Assets
             return assetsAlias;
         }
 
-        private static void LoadGroups()
+        private static void LoadPackages()
         {
             Dictionary<string, List<AssetAlias>> assetsAlias = LoadAlias();
-            _assetGroups.Clear();
-            foreach (var groupName in assetsAlias.Keys)
+            _assetPackages.Clear();
+            foreach (var packageName in assetsAlias.Keys)
             {
 #if UNITY_EDITOR
-                _assetGroups.Add(groupName, new AssetGroup_Editor(groupName, assetsAlias[groupName]));
+                _assetPackages.Add(packageName, new AssetPackage_Editor(packageName, assetsAlias[packageName]));
 #else
-                _assetGroups.Add(groupName, new AssetGroup_Release(groupName, assetsAlias[groupName]));
+                _assetPackages.Add(packageName, new AssetPackage_Release(packageName, assetsAlias[packageName]));
 #endif
             }
         }
 
-        private static void CheckDefaultGroup()
+        private static void CheckDefaultPackage()
         {
-            if (_defaultAssetGroup == null)
-                throw new MissingReferenceException("Please Call AssetMgr.SetDefaultGroup");
+            if (_defaultAssetPackage == null)
+                throw new MissingReferenceException("Please Call AssetMgr.SetDefaultPackage");
         }
     }
 }

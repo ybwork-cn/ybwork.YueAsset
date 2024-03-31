@@ -255,6 +255,7 @@ namespace ybwork.Assets.Editor
 
             string contents = JsonConvert.SerializeObject(_data.GetAssetPaths(), Formatting.Indented);
             File.WriteAllText(_jsonFilename, contents + "\r\n");
+            Debug.Log("资源收集器保存成功");
         }
 
         private void Build()
