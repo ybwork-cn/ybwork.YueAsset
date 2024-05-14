@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -14,7 +13,6 @@ namespace ybwork.Assets.Editor
 {
     internal class AssetCollectorWindow : EditorWindow
     {
-        private const string _jsonFilename = "Assets/Settings/AssetCollectorData.alias.json";
         private static AssetCollectorWindow _window;
         private AssetCollectorData _data;
 
@@ -255,15 +253,13 @@ namespace ybwork.Assets.Editor
             EditorUtility.SetDirty(_data);
             AssetDatabase.SaveAssets();
 
-            string contents = JsonConvert.SerializeObject(_data.GetAssets(), Formatting.Indented);
-            File.WriteAllText(_jsonFilename, contents + "\r\n");
             Debug.Log("资源收集器保存成功");
         }
 
         private void Build()
         {
             SaveData();
-            AssetBuilder.BuildAssetBundle(_data, _jsonFilename);
+            AssetBuilder.BuildAssetBundle(_data);
         }
 
         private static void RebuildListView(ListView listView)

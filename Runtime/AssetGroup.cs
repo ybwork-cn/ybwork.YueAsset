@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace ybwork.Assets
 {
@@ -14,59 +16,41 @@ namespace ybwork.Assets
             PackageName = packageName;
         }
 
-        public abstract void InitSync();
-        public abstract Task InitAsync();
+        public abstract Task InitAsync(string url);
         public abstract T LoadAssetSync<T>(string id) where T : Object;
     }
 
     internal class AssetPackage_Release : AssetPackage
     {
-        private readonly Dictionary<string, AssetBundle> _assetBundles = new();
-        private readonly Dictionary<string, AssetBundle> _assetPaths = new();
-        private readonly List<AssetAlias> _assets;
+        private readonly Dictionary<string, AssetBundle> _bundles = new();
+        private readonly Dictionary<string, AssetBundle> _assetInBundles = new();
+        private readonly Dictionary<string, Object> _assets = new();
+        private readonly List<AssetAlias> _alias;
         private bool _inited = false;
 
-        internal AssetPackage_Release(string groupName, List<AssetAlias> assets) : base(groupName)
+        internal AssetPackage_Release(string packageName, List<AssetAlias> assets) : base(packageName)
         {
-            _assets = assets;
+            _alias = assets;
         }
 
-        public override void InitSync()
+        public override async Task InitAsync(string url)
         {
             if (_inited)
                 return;
 
-            var bundleNames = _assets.GroupBy(asset => asset.BundleName).Select(group => group.Key);
+            var bundleNames = _alias.GroupBy(asset => asset.BundleName).Select(group => group.Key);
             foreach (var bundleName in bundleNames)
             {
-                string path = AssetMgr.AssetBundlePath + PackageName + "/" + bundleName;
-                _assetBundles[bundleName] = AssetBundle.LoadFromFile(path + ".ab");
+                string path = Path.Combine(url, PackageName, bundleName.ToLower() + ".ab");
+                UnityWebRequest request = UnityWebRequestAssetBundle.GetAssetBundle(path);
+                await request.SendWebRequest();
+                AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(request);
+                _bundles[bundleName] = assetBundle;
             }
 
-            foreach (var asset in _assets)
+            foreach (var asset in _alias)
             {
-                _assetPaths[asset.Name] = _assetBundles[asset.BundleName];
-            }
-
-            _inited = true;
-        }
-
-        public override async Task InitAsync()
-        {
-            if (_inited)
-                return;
-
-            var bundleNames = _assets.GroupBy(asset => asset.BundleName).Select(group => group.Key);
-            foreach (var bundleName in bundleNames)
-            {
-                string path = AssetMgr.AssetBundlePath + PackageName + "/" + bundleName;
-                var assetBundleCreateRequest = await AssetBundle.LoadFromFileAsync(path + ".ab");
-                _assetBundles[bundleName] = assetBundleCreateRequest.assetBundle;
-            }
-
-            foreach (var asset in _assets)
-            {
-                _assetPaths[asset.Name] = _assetBundles[asset.BundleName];
+                _assetInBundles[asset.Name] = _bundles[asset.BundleName];
             }
 
             _inited = true;
@@ -76,10 +60,20 @@ namespace ybwork.Assets
         {
             if (!_inited)
                 throw new System.Exception("Not Inited");
-            return _assetPaths[id].LoadAsset<T>(id);
+
+            if (_assets.TryGetValue(id, out Object obj))
+                return (T)obj;
+
+            string path = _alias.First(alia => id == alia.Name).AssetPath;
+            T result = _assetInBundles[id].LoadAsset<T>(path);
+            result.name = id;
+
+            _assets[id] = result;
+            return result;
         }
     }
 
+#if UNITY_EDITOR
     internal class AssetPackage_Editor : AssetPackage
     {
         private readonly Dictionary<string, string> _assetPaths = new();
@@ -92,11 +86,7 @@ namespace ybwork.Assets
             }
         }
 
-        public override void InitSync()
-        {
-        }
-
-        public override Task InitAsync()
+        public override Task InitAsync(string url)
         {
             return Task.CompletedTask;
         }
@@ -107,11 +97,10 @@ namespace ybwork.Assets
             {
                 throw new System.IndexOutOfRangeException("不存在的资源名称:" + id);
             }
-#if UNITY_EDITOR
-            return UnityEditor.AssetDatabase.LoadAssetAtPath<T>(path);
-#else
-            return null;
-#endif
+            T result = UnityEditor.AssetDatabase.LoadAssetAtPath<T>(path);
+            result.name = id;
+            return result;
         }
     }
+#endif
 }
