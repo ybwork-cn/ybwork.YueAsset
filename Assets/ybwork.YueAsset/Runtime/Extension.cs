@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ybwork.Assets
 {
-    public static class Extension
+    internal static class Extension
     {
         public static TaskAwaiter<T> GetAwaiter<T>(this T asyncOperation) where T : AsyncOperation
         {

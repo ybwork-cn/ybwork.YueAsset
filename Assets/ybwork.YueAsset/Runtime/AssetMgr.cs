@@ -1,31 +1,61 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace ybwork.Assets
 {
     public static class AssetMgr
     {
-        public static readonly string AssetBundlePath = Application.streamingAssetsPath + "/Bundles/";
-        public const string AliasPath = "Assets/Settings/AssetCollectorData.alias.json";
         private static AssetPackage _defaultAssetPackage = null;
         private static readonly Dictionary<string, AssetPackage> _assetPackages = new();
 
-        public static void InitSync()
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="url">资源包文件夹URL</param>
+        /// <returns></returns>
+        public static async Task InitAsync_Release(string url)
         {
-            LoadPackages();
+            await LoadReleasePackages(url + "/alias.json");
             foreach (AssetPackage package in _assetPackages.Values)
-                package.InitSync();
+                await package.InitAsync(url);
         }
 
-        public static async Task InitAsync()
+        private static async Task LoadReleasePackages(string alias_url)
         {
-            LoadPackages();
-            foreach (AssetPackage package in _assetPackages.Values)
-                await package.InitAsync();
+            Dictionary<string, List<AssetAlias>> assetsAlias = await LoadAlias(alias_url);
+            _assetPackages.Clear();
+            foreach (var packageName in assetsAlias.Keys)
+            {
+                _assetPackages.Add(packageName, new AssetPackage_Release(packageName, assetsAlias[packageName]));
+            }
         }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="alias_url">alias目录url</param>
+        /// <returns></returns>
+        public static async Task InitAsync_Editor(string alias_url)
+        {
+            await LoadEditorPackages(alias_url);
+            foreach (AssetPackage package in _assetPackages.Values)
+                await package.InitAsync(null);
+        }
+
+        private static async Task LoadEditorPackages(string alias_url)
+        {
+            Dictionary<string, List<AssetAlias>> assetsAlias = await LoadAlias(alias_url);
+            _assetPackages.Clear();
+            foreach (var packageName in assetsAlias.Keys)
+            {
+                _assetPackages.Add(packageName, new AssetPackage_Editor(packageName, assetsAlias[packageName]));
+            }
+        }
+#endif
 
         public static void SetDefaultPackage(string defaultPackageName)
         {
@@ -44,30 +74,12 @@ namespace ybwork.Assets
             return _defaultAssetPackage.LoadAssetSync<T>(id);
         }
 
-        private static Dictionary<string, List<AssetAlias>> LoadAlias()
+        private static async Task<Dictionary<string, List<AssetAlias>>> LoadAlias(string alias_url)
         {
-#if UNITY_EDITOR
-            string json = UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(AliasPath).text;
-#else
-            AssetBundle bundle = AssetBundle.LoadFromFile(AssetBundlePath + "__dict__/dict.ab");
-            string json = bundle.LoadAllAssets<TextAsset>()[0].text;
-#endif
-            Dictionary<string, List<AssetAlias>> assetsAlias = JsonConvert.DeserializeObject<Dictionary<string, List<AssetAlias>>>(json);
-            return assetsAlias;
-        }
-
-        private static void LoadPackages()
-        {
-            Dictionary<string, List<AssetAlias>> assetsAlias = LoadAlias();
-            _assetPackages.Clear();
-            foreach (var packageName in assetsAlias.Keys)
-            {
-#if UNITY_EDITOR
-                _assetPackages.Add(packageName, new AssetPackage_Editor(packageName, assetsAlias[packageName]));
-#else
-                _assetPackages.Add(packageName, new AssetPackage_Release(packageName, assetsAlias[packageName]));
-#endif
-            }
+            UnityWebRequest requset = UnityWebRequest.Get(alias_url);
+            await requset.SendWebRequest();
+            string text = requset.downloadHandler.text;
+            return JsonConvert.DeserializeObject<Dictionary<string, List<AssetAlias>>>(text);
         }
 
         private static void CheckDefaultPackage()

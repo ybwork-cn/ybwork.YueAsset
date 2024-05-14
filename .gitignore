@@ -1,11 +1,14 @@
-Library/
-Logs/
-Temp/
-UserSettings/
-obj/
+/Library/
+/Logs/
+/Temp/
+/UserSettings/
+/obj/
 
-.vs/
-.vsconfig
+/.vs/
+/.vsconfig
 
-*.csproj
-*.sln
+/*.csproj
+/*.sln
+
+/Bundles/
+/Release/

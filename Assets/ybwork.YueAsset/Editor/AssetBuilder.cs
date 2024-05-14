@@ -1,4 +1,4 @@
-﻿using System;
+﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,12 +9,15 @@ namespace ybwork.Assets.Editor
 {
     internal static class AssetBuilder
     {
-        internal static string OutputPath => Application.streamingAssetsPath + "/Bundles";
-
-        internal static void BuildAssetBundle(AssetCollectorData collectorData, string jsonFileName)
+        internal static void BuildAssetBundle(AssetCollectorData collectorData)
         {
+            string outputPath = EditorUtility.SaveFolderPanel("保存到", "", "");
+            if (!Directory.Exists(outputPath))
+                return;
+
             Debug.Log("开始打Windows资源包");
-            Directory.CreateDirectory(OutputPath);
+            Directory.Delete(outputPath, true);
+            Directory.CreateDirectory(outputPath);
 
             foreach (AssetCollectorPackageData packageData in collectorData.Packages)
             {
@@ -28,21 +31,14 @@ namespace ybwork.Assets.Editor
                     };
                     bundles.Add(build);
                 }
-                string path = $"{OutputPath}/{packageData.PackageName}/";
+                string path = Path.Combine(outputPath, packageData.PackageName);
                 Directory.CreateDirectory(path);
                 BuildPipeline.BuildAssetBundles(path, bundles.ToArray(), BuildAssetBundleOptions.None, collectorData.BuildTarget);
                 Debug.Log($"{path}打包完成");
             }
 
-            AssetBundleBuild[] dictBuild = new AssetBundleBuild[]
-            {
-                new() {
-                    assetBundleName = "dict.ab",
-                    assetNames = new string[]{ jsonFileName },
-                }
-            };
-            Directory.CreateDirectory(OutputPath + "/__dict__/");
-            BuildPipeline.BuildAssetBundles(OutputPath + "/__dict__/", dictBuild, BuildAssetBundleOptions.None, collectorData.BuildTarget);
+            string aliasMap = JsonConvert.SerializeObject(collectorData.GetAssets(), Formatting.Indented);
+            File.WriteAllText(Path.Combine(outputPath, "alias.json"), aliasMap);
             Debug.Log("资源包 打包完成");
         }
     }

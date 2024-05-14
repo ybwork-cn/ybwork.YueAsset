@@ -1,13 +1,15 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using ybwork.Assets;
 
 public class Test : MonoBehaviour
 {
-    void Start()
+    async void Start()
     {
-        AssetMgr.InitSync();
+#if UNITY_EDITOR
+        await AssetMgr.InitAsync_Editor(Application.streamingAssetsPath + "/Bundles/alias.json");
+#else
+        await AssetMgr.InitAsync_Release("D:\\Tao\\Desktop\\Coding\\Unity\\ybwork.YueAssets\\Bundles");
+#endif
         AssetMgr.SetDefaultPackage("DefaultPackage");
         Instantiate(AssetMgr.LoadAssetSync<GameObject>("AA_Cube"));
 
