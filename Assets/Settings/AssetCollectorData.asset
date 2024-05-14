@@ -16,12 +16,15 @@ MonoBehaviour:
   Packages:
   - PackageName: DefaultPackage
     Groups:
-    - GroupName: DefaultGroup
+    - GroupName: AA
       Items:
       - AssetGUID: f8889534df30c254f8bc2da90c69ad77
+        AssetStyle: 1
       - AssetGUID: 77ecc6441b8faaa46b778c1ce40d1bfd
+        AssetStyle: 0
   - PackageName: aa
     Groups:
     - GroupName: DefaultGroup
       Items:
       - AssetGUID: 2945ac00a82ccfe4a89be5b71c0d91f2
+        AssetStyle: 0

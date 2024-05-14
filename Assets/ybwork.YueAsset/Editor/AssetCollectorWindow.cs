@@ -89,6 +89,8 @@ namespace ybwork.Assets.Editor
                 AssetCollectorPackageData package = _data.Packages[packageListView.selectedIndex];
                 AssetCollectorGroupData group = package.Groups[groupListView.selectedIndex];
                 group.GroupName = evt.newValue;
+
+                RefreshCollectorList(collectorScrollView, group);
                 groupListView.RefreshItem(groupListView.selectedIndex);
             });
 
@@ -253,7 +255,7 @@ namespace ybwork.Assets.Editor
             EditorUtility.SetDirty(_data);
             AssetDatabase.SaveAssets();
 
-            string contents = JsonConvert.SerializeObject(_data.GetAssetPaths(), Formatting.Indented);
+            string contents = JsonConvert.SerializeObject(_data.GetAssets(), Formatting.Indented);
             File.WriteAllText(_jsonFilename, contents + "\r\n");
             Debug.Log("资源收集器保存成功");
         }
@@ -283,7 +285,7 @@ namespace ybwork.Assets.Editor
 
             foreach (AssetCollectorItemData item in groupData.Items)
             {
-                VisualElement element = MakeCollectorListViewItem(item, onDelete: () =>
+                VisualElement element = MakeCollectorListViewItem(groupData, item, onDelete: () =>
                 {
                     groupData.Items.Remove(item);
                     RefreshCollectorList(collectorScrollView, groupData);
@@ -318,13 +320,22 @@ namespace ybwork.Assets.Editor
             return collectorItemData;
         }
 
-        private static VisualElement MakeCollectorListViewItem(AssetCollectorItemData collectorItemData, Action onDelete)
+        private static VisualElement MakeCollectorListViewItem(
+            AssetCollectorGroupData groupData,
+            AssetCollectorItemData collectorItemData,
+            Action onDelete)
         {
             VisualElement element = new VisualElement();
 
             VisualElement elementTop = new VisualElement();
             elementTop.style.flexDirection = FlexDirection.Row;
             element.Add(elementTop);
+
+            VisualElement elementSettings = new VisualElement();
+            elementSettings.style.flexDirection = FlexDirection.Row;
+            elementSettings.style.height = 20;
+            elementSettings.style.alignItems = Align.Center;
+            element.Add(elementSettings);
 
             VisualElement elementFoldout = new VisualElement();
             elementFoldout.style.flexDirection = FlexDirection.Row;
@@ -367,12 +378,37 @@ namespace ybwork.Assets.Editor
                     // register "ValuChangedEvent" to the objectField
                     // When responding, refresh the "Main Assets" Foldout
                     collectorItemData.AssetPath = AssetDatabase.GetAssetPath(evt.newValue);
+
                     Foldout foldout = elementFoldout.Q<Foldout>("Foldout1");
-                    RefreshAssetList(collectorItemData, foldout);
                     RefreshAssetLabel(label, collectorItemData, objectField.value);
+                    RefreshAssetList(groupData, collectorItemData, foldout);
                 });
                 objectRow.Add(objectField);
                 elementTop.Add(objectRow);
+            }
+
+            // Settings VisualElement
+            {
+                var label = new Label();
+                label.style.width = 93;
+                elementSettings.Add(label);
+            }
+            {
+                var label = new Label("寻址方式:");
+                elementSettings.Add(label);
+            }
+            {
+                List<string> list = new List<string> { "文件名", "分组名_文件名" };
+                var dropdown = new DropdownField(list, 0);
+                dropdown.style.width = 100;
+                dropdown.RegisterValueChangedCallback(evt =>
+                {
+                    collectorItemData.AssetStyle = (AssetCollectorItemStyle)list.IndexOf(evt.newValue);
+
+                    Foldout foldout = elementFoldout.Q<Foldout>("Foldout1");
+                    RefreshAssetList(groupData, collectorItemData, foldout);
+                });
+                elementSettings.Add(dropdown);
             }
 
             // Foldout VisualElement
@@ -388,7 +424,7 @@ namespace ybwork.Assets.Editor
                 foldout.text = "Main Assets";
                 elementFoldout.Add(foldout);
 
-                RefreshAssetList(collectorItemData, foldout);
+                RefreshAssetList(groupData, collectorItemData, foldout);
             }
 
             // Space VisualElement
@@ -405,7 +441,7 @@ namespace ybwork.Assets.Editor
         {
             label.style.color = Color.white;
             label.text = "Collected";
-            if (collectorItemData.RepeatedAssets.Length > 0)
+            if (collectorItemData.GetRepeatedAssets().Length > 0)
             {
                 label.text = "Repeat";
                 label.style.color = Color.yellow;
@@ -417,20 +453,24 @@ namespace ybwork.Assets.Editor
             }
         }
 
-        private static void RefreshAssetList(AssetCollectorItemData collectorItemData, Foldout foldout)
+        private static void RefreshAssetList(
+            AssetCollectorGroupData groupData,
+            AssetCollectorItemData collectorItemData,
+            Foldout foldout)
         {
             foldout.Clear();
-            foreach (AssetAlias assetAlias in collectorItemData.Assets)
+            foreach (AssetAlias assetAlias in collectorItemData.GetAssets(groupData.GroupName))
             {
                 VisualElement elementItem = new VisualElement();
                 elementItem.style.flexDirection = FlexDirection.Row;
 
                 TextField textField = new TextField();
                 textField.value = assetAlias.Name;
+                textField.textEdition.isReadOnly = true;
                 textField.style.width = 200;
                 textField.style.minWidth = 200;
                 textField.style.maxWidth = 200;
-                if (collectorItemData.RepeatedAssets.Contains(assetAlias.Name))
+                if (collectorItemData.GetRepeatedAssets().Contains(assetAlias.Name))
                 {
                     textField.Children().Last().Children().First().style.color = Color.yellow;
                 }

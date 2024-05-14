@@ -5,11 +5,11 @@ using ybwork.Assets;
 
 public class Test : MonoBehaviour
 {
-    async void Start()
+    void Start()
     {
-        await AssetMgr.InitAsync();
+        AssetMgr.InitSync();
         AssetMgr.SetDefaultPackage("DefaultPackage");
-        Instantiate(AssetMgr.LoadAssetSync<GameObject>("New Prefab"));
+        Instantiate(AssetMgr.LoadAssetSync<GameObject>("AA_Cube"));
 
         Instantiate(AssetMgr.GetPackage("aa").LoadAssetSync<GameObject>("Capsule"));
     }

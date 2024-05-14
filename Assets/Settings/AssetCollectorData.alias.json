@@ -1,18 +1,18 @@
 {
   "DefaultPackage": [
     {
-      "Name": "New Prefab",
-      "BundleName": "DefaultGroup",
-      "AssetPath": "Assets/Scenes/New Prefab.prefab"
+      "Name": "AA_Cube",
+      "BundleName": "AA",
+      "AssetPath": "Assets/Scenes/Cube.prefab"
     },
     {
       "Name": "AssetCollectorData.alias",
-      "BundleName": "DefaultGroup",
+      "BundleName": "AA",
       "AssetPath": "Assets/Settings/AssetCollectorData.alias.json"
     },
     {
       "Name": "AssetCollectorData",
-      "BundleName": "DefaultGroup",
+      "BundleName": "AA",
       "AssetPath": "Assets/Settings/AssetCollectorData.asset"
     }
   ],

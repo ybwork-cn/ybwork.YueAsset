@@ -1,7 +1,7 @@
 ::设置分支名字
 SET ToolName=upm
 ::设置模块源路径
-SET ToolAssetPath=Assets/ybwork/YueAsset
+SET ToolAssetPath=Assets/ybwork.YueAsset
 
 git branch -D %ToolName%
 git remote rm %ToolName%
