@@ -397,6 +397,7 @@ namespace ybwork.Assets.Editor
                 List<string> list = new List<string> { "文件名", "分组名_文件名" };
                 var dropdown = new DropdownField(list, 0);
                 dropdown.style.width = 100;
+                dropdown.index = (int)collectorItemData.AssetStyle;
                 dropdown.RegisterValueChangedCallback(evt =>
                 {
                     collectorItemData.AssetStyle = (AssetCollectorItemStyle)list.IndexOf(evt.newValue);

@@ -1,7 +1,7 @@
 {
     "name": "com.ybwork.yue-asset",
     "displayName": "YueAsset",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "unity": "2022.3",
     "description": "",
     "author": {
@@ -11,7 +11,7 @@
     "samples": [],
     "repository": {
         "type": "git",
-        "url": "https://github.com/ybwork-cn/YueAsset.git#upm"
+        "url": "https://github.com/ybwork-cn/ybwork.YueAsset.git#upm"
     },
     "relatedPackages": {},
     "dependencies": {
