@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace ybwork.Assets
 {
@@ -22,32 +23,32 @@ namespace ybwork.Assets
         private readonly Dictionary<string, AssetBundle> _assetInBundles = new();
         private readonly Dictionary<string, Object> _assets = new();
         private readonly List<AssetAlias> _alias;
-        private MutiDownloadHandler _downloadHandler;
+        private readonly Dictionary<string, BundleGroupInfo> _groupInfos;
+        private readonly MutiDownloadHandler _downloadHandler = new MutiDownloadHandler();
 
-        internal AssetPackage_Release(string packageName, List<AssetAlias> assets) : base(packageName)
+        internal AssetPackage_Release(string packageName, List<AssetAlias> assets, Dictionary<string, BundleGroupInfo> groupInfos)
+            : base(packageName)
         {
             _alias = assets;
+            _groupInfos = groupInfos;
         }
 
         public MutiDownloadHandler InitAsync(string url)
         {
-            if (_downloadHandler != null)
-                return _downloadHandler;
-
-            _downloadHandler = new MutiDownloadHandler();
+            bool cache = Application.platform != RuntimePlatform.WebGLPlayer;
 
             var bundleNames = _alias.GroupBy(asset => asset.BundleName).Select(group => group.Key);
             foreach (var bundleName in bundleNames)
             {
-                bool cache = Application.platform != RuntimePlatform.WebGLPlayer;
-
-                AssetBundleDownloadHandler downloadHandler = new(url, PackageName, bundleName, cache);
+                long length = _groupInfos[bundleName.ToLower() + ".ab"].Size;
+                AssetBundleDownloadHandler downloadHandler = new(url, PackageName, bundleName, length, cache);
                 downloadHandler.Then(() =>
                 {
                     _bundles[bundleName] = downloadHandler.AssetBundle;
                 });
                 _downloadHandler.AddDependency(downloadHandler);
             }
+            _downloadHandler.Start();
 
             _downloadHandler.Then(() =>
             {

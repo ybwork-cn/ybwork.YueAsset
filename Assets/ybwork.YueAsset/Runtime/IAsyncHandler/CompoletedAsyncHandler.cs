@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections;
 
 namespace ybwork.Assets
 {
@@ -6,6 +7,13 @@ namespace ybwork.Assets
     {
         public float Progress => 1;
 
-        public Task Task => Task.CompletedTask;
+        public IEnumerator Task => null;
+
+        public bool Completed => true;
+
+        public void Then(Action action)
+        {
+            action?.Invoke();
+        }
     }
 }

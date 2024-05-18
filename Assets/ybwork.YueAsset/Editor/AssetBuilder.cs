@@ -8,13 +8,6 @@ using UnityEngine;
 
 namespace ybwork.Assets.Editor
 {
-    class BundleGroupInfo
-    {
-        public long Size;
-        public string Hash;
-    }
-
-
     internal static class AssetBuilder
     {
         internal static void BuildAssetBundle(AssetCollectorData collectorData)
@@ -51,7 +44,7 @@ namespace ybwork.Assets.Editor
                     groupInfos.Add(group, new BundleGroupInfo
                     {
                         Hash = assetBundleManifest.GetAssetBundleHash(group).ToString(),
-                        Size = new FileInfo(Path.Combine(outputPath, packageData.PackageName, group)).Length,
+                        Size = (ulong)new FileInfo(Path.Combine(outputPath, packageData.PackageName, group)).Length,
                     });
                 }
                 packgeInfos.Add(packageData.PackageName, groupInfos);
