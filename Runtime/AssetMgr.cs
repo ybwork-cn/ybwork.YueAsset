@@ -1,13 +1,12 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace ybwork.Assets
 {
     public static class AssetMgr
     {
+        internal static readonly string PersistentDataPath = Application.persistentDataPath + "/YueAsset/Bundles";
         private static AssetPackage _defaultAssetPackage = null;
         private static readonly Dictionary<string, AssetPackage> _assetPackages = new();
 
@@ -16,44 +15,52 @@ namespace ybwork.Assets
         /// </summary>
         /// <param name="url">资源包文件夹URL</param>
         /// <returns></returns>
-        public static async Task InitAsync_Release(string url)
+        public static IAsyncHandler InitAsync_Release(string url)
         {
-            await LoadReleasePackages(url + "/alias.json");
-            foreach (AssetPackage package in _assetPackages.Values)
-                await package.InitAsync(url);
-        }
+            DownloadHandler aliasDownloadHandler = LoadAliasAsync(url + "/alias.json");
 
-        private static async Task LoadReleasePackages(string alias_url)
-        {
-            Dictionary<string, List<AssetAlias>> assetsAlias = await LoadAlias(alias_url);
-            _assetPackages.Clear();
-            foreach (var packageName in assetsAlias.Keys)
+            MutiDownloadHandler mutiAsyncHandler = new MutiDownloadHandler(aliasDownloadHandler);
+
+            aliasDownloadHandler.Then((handler) =>
             {
-                _assetPackages.Add(packageName, new AssetPackage_Release(packageName, assetsAlias[packageName]));
-            }
+                Dictionary<string, List<AssetAlias>> assetsAlias =
+                    JsonConvert.DeserializeObject<Dictionary<string, List<AssetAlias>>>(handler.ContentText);
+                _assetPackages.Clear();
+                foreach (var packageName in assetsAlias.Keys)
+                {
+                    AssetPackage_Release package = new AssetPackage_Release(packageName, assetsAlias[packageName]);
+                    _assetPackages.Add(packageName, package);
+
+                    var packageDownloadHandler = package.InitAsync(url);
+                    mutiAsyncHandler.AddDependency(packageDownloadHandler);
+                }
+            });
+
+            return mutiAsyncHandler;
         }
 
 #if UNITY_EDITOR
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="alias_url">alias目录url</param>
-        /// <returns></returns>
-        public static async Task InitAsync_Editor(string alias_url)
+        public static IAsyncHandler InitAsync_Editor()
         {
-            await LoadEditorPackages(alias_url);
-            foreach (AssetPackage package in _assetPackages.Values)
-                await package.InitAsync(null);
+            return InitAsync_Editor(Application.dataPath + "/YueAssetAlias.json");
         }
 
-        private static async Task LoadEditorPackages(string alias_url)
+        public static IAsyncHandler InitAsync_Editor(string alias_path)
         {
-            Dictionary<string, List<AssetAlias>> assetsAlias = await LoadAlias(alias_url);
-            _assetPackages.Clear();
-            foreach (var packageName in assetsAlias.Keys)
+            DownloadHandler aliasDownloadHandler = LoadAliasAsync(alias_path);
+            aliasDownloadHandler.Then((handler) =>
             {
-                _assetPackages.Add(packageName, new AssetPackage_Editor(packageName, assetsAlias[packageName]));
-            }
+                Dictionary<string, List<AssetAlias>> assetsAlias =
+                    JsonConvert.DeserializeObject<Dictionary<string, List<AssetAlias>>>(handler.ContentText);
+                _assetPackages.Clear();
+                foreach (var packageName in assetsAlias.Keys)
+                {
+                    AssetPackage_Editor package = new AssetPackage_Editor(packageName, assetsAlias[packageName]);
+                    _assetPackages.Add(packageName, package);
+                }
+            });
+
+            return aliasDownloadHandler;
         }
 #endif
 
@@ -74,12 +81,9 @@ namespace ybwork.Assets
             return _defaultAssetPackage.LoadAssetSync<T>(id);
         }
 
-        private static async Task<Dictionary<string, List<AssetAlias>>> LoadAlias(string alias_url)
+        private static DownloadHandler LoadAliasAsync(string alias_url)
         {
-            UnityWebRequest requset = UnityWebRequest.Get(alias_url);
-            await requset.SendWebRequest();
-            string text = requset.downloadHandler.text;
-            return JsonConvert.DeserializeObject<Dictionary<string, List<AssetAlias>>>(text);
+            return new DownloadHandler(alias_url);
         }
 
         private static void CheckDefaultPackage()
