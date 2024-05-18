@@ -1,9 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace ybwork.Assets
 {
@@ -16,7 +13,6 @@ namespace ybwork.Assets
             PackageName = packageName;
         }
 
-        public abstract Task InitAsync(string url);
         public abstract T LoadAssetSync<T>(string id) where T : Object;
     }
 
@@ -26,39 +22,47 @@ namespace ybwork.Assets
         private readonly Dictionary<string, AssetBundle> _assetInBundles = new();
         private readonly Dictionary<string, Object> _assets = new();
         private readonly List<AssetAlias> _alias;
-        private bool _inited = false;
+        private MutiDownloadHandler _downloadHandler;
 
         internal AssetPackage_Release(string packageName, List<AssetAlias> assets) : base(packageName)
         {
             _alias = assets;
         }
 
-        public override async Task InitAsync(string url)
+        public MutiDownloadHandler InitAsync(string url)
         {
-            if (_inited)
-                return;
+            if (_downloadHandler != null)
+                return _downloadHandler;
+
+            _downloadHandler = new MutiDownloadHandler();
 
             var bundleNames = _alias.GroupBy(asset => asset.BundleName).Select(group => group.Key);
             foreach (var bundleName in bundleNames)
             {
-                string path = Path.Combine(url, PackageName, bundleName.ToLower() + ".ab");
-                UnityWebRequest request = UnityWebRequestAssetBundle.GetAssetBundle(path);
-                await request.SendWebRequest();
-                AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(request);
-                _bundles[bundleName] = assetBundle;
+                bool cache = Application.platform != RuntimePlatform.WebGLPlayer;
+
+                AssetBundleDownloadHandler downloadHandler = new(url, PackageName, bundleName, cache);
+                downloadHandler.Then(() =>
+                {
+                    _bundles[bundleName] = downloadHandler.AssetBundle;
+                });
+                _downloadHandler.AddDependency(downloadHandler);
             }
 
-            foreach (var asset in _alias)
+            _downloadHandler.Then(() =>
             {
-                _assetInBundles[asset.Name] = _bundles[asset.BundleName];
-            }
+                foreach (var asset in _alias)
+                {
+                    _assetInBundles[asset.Name] = _bundles[asset.BundleName];
+                }
+            });
 
-            _inited = true;
+            return _downloadHandler;
         }
 
         public override T LoadAssetSync<T>(string id)
         {
-            if (!_inited)
+            if (_downloadHandler == null)
                 throw new System.Exception("Not Inited");
 
             if (_assets.TryGetValue(id, out Object obj))
@@ -84,11 +88,6 @@ namespace ybwork.Assets
             {
                 _assetPaths.Add(asset.Name, asset.AssetPath);
             }
-        }
-
-        public override Task InitAsync(string url)
-        {
-            return Task.CompletedTask;
         }
 
         public override T LoadAssetSync<T>(string id)

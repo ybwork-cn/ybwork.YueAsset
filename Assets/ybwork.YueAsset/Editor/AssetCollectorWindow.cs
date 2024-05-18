@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -252,6 +253,9 @@ namespace ybwork.Assets.Editor
         {
             EditorUtility.SetDirty(_data);
             AssetDatabase.SaveAssets();
+
+            string aliasMap = JsonConvert.SerializeObject(_data.GetAssets(), Formatting.Indented);
+            File.WriteAllText(Application.dataPath + "/YueAssetAlias.json", aliasMap);
 
             Debug.Log("资源收集器保存成功");
         }
