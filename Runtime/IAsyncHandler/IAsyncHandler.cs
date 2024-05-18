@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections;
 
 namespace ybwork.Assets
 {
@@ -11,6 +12,9 @@ namespace ybwork.Assets
         /// <summary>
         /// 此异步任务的Task,该Task完成即代表此异步任务已完成
         /// </summary>
-        public Task Task { get; }
+        public IEnumerator Task { get; }
+
+        public bool Completed { get; }
+        public void Then(Action action);
     }
 }
