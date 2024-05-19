@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -196,6 +197,32 @@ namespace ybwork.Assets.Editor
 
                 RefreshCollectorList(collectorScrollView, _data.Packages[selectedPackageIndex].Groups[selectedGroupIndex]);
             });
+
+            TextField outputPathTextField = root.Query<TextField>("OutputPath");
+            outputPathTextField.value = _data.TargetPath;
+            outputPathTextField.RegisterValueChangedCallback(value =>
+            {
+                _data.TargetPath = value.newValue;
+            });
+
+            Button outputPathSelectorButton = root.Query<Button>("OutputPathSelector");
+            outputPathSelectorButton.clicked += () =>
+            {
+                string path, name;
+                if (Directory.Exists(outputPathTextField.text))
+                {
+                    path = Path.GetDirectoryName(outputPathTextField.text);
+                    name = Path.GetFileName(outputPathTextField.text);
+                }
+                else
+                {
+                    path = Environment.CurrentDirectory;
+                    name = "";
+                }
+                path = EditorUtility.OpenFolderPanel("选择输出路径", path, name);
+                _data.TargetPath = path;
+                outputPathTextField.value = path;
+            };
 
             Button refreshButton = root.Query<Button>("RefreshButton");
             refreshButton.clicked += () =>
