@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,7 +11,12 @@ namespace ybwork.Assets.Editor
     {
         internal static void BuildAssetBundle(AssetCollectorData collectorData)
         {
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "YueAssets");
+            string outputPath = collectorData.TargetPath;
+            if (!Directory.Exists(outputPath))
+            {
+                Debug.LogError("路径不存在 at " + outputPath);
+                return;
+            }
 
             Debug.Log("开始打Windows资源包");
             if (Directory.Exists(outputPath))

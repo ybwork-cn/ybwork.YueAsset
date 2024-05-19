@@ -122,6 +122,7 @@ namespace ybwork.Assets.Editor
     internal class AssetCollectorData : ScriptableObject
     {
         public BuildTarget BuildTarget = BuildTarget.StandaloneWindows64;
+        public string TargetPath;
         public List<AssetCollectorPackageData> Packages = new();
 
         public Dictionary<string, IEnumerable<AssetAlias>> GetAssets()

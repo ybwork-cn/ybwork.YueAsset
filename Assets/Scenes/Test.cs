@@ -13,8 +13,8 @@ public class Test : MonoBehaviour
         //_initHandler = AssetMgr.InitAsync_Editor();
         //_initHandler = AssetMgr.InitAsync_Editor("https://ybwork.cn:12353/Bundles/alias.json");
         //#else
-        _initHandler = AssetMgr.InitAsync_Release("http://localhost:8080/");
-        //_initHandler = AssetMgr.InitAsync_Release(Environment.CurrentDirectory + "/YueAssets");
+        //_initHandler = AssetMgr.InitAsync_Release("http://localhost:8080/");
+        _initHandler = AssetMgr.InitAsync_Release(Environment.CurrentDirectory + "/YueAssets");
         //#endif
 
         yield return _initHandler.Task;
