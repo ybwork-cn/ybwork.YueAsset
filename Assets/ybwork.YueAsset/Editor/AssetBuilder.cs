@@ -14,7 +14,7 @@ namespace ybwork.Assets.Editor
             string outputPath = collectorData.TargetPath;
             if (!Directory.Exists(outputPath))
             {
-                Debug.LogError("路径不存在 at " + outputPath);
+                Debug.LogError($"路径不存在 at \"{outputPath}\"");
                 return;
             }
 

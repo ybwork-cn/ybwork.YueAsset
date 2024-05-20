@@ -9,11 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fcbf19f576c07ac40b8e5263342388cf, type: 3}
+  m_Script: {fileID: 11500000, guid: 1ba4d8c1479b0124da7d7db92f1ffc02, type: 3}
   m_Name: AssetCollectorData
   m_EditorClassIdentifier: 
   BuildTarget: 19
-  TargetPath: D:/Tao/Desktop/Coding/Unity/ybwork.YueAssets/YueAssets
+  TargetPath: E:/Tao/Desktop/Coding/ybwork.YueAsset/YueAssets
   Packages:
   - PackageName: DefaultPackage
     Groups:
@@ -21,8 +21,6 @@ MonoBehaviour:
       Items:
       - AssetGUID: f8889534df30c254f8bc2da90c69ad77
         AssetStyle: 1
-      - AssetGUID: 77ecc6441b8faaa46b778c1ce40d1bfd
-        AssetStyle: 0
   - PackageName: aa
     Groups:
     - GroupName: DefaultGroup

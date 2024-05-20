@@ -32,28 +32,7 @@ namespace ybwork.Assets.Editor
 
         private void Awake()
         {
-            string[] guids = AssetDatabase.FindAssets($"t:{typeof(AssetCollectorData).FullName}");
-            if (guids.Length == 0)
-            {
-                _data = CreateInstance<AssetCollectorData>();
-                Directory.CreateDirectory("Assets/Settings/");
-                AssetDatabase.CreateAsset(_data, "Assets/Settings/" + nameof(AssetCollectorData) + ".asset");
-            }
-            else if (guids.Length == 1)
-            {
-                string assetPath = AssetDatabase.GUIDToAssetPath(guids[0]);
-                _data = AssetDatabase.LoadAssetAtPath<AssetCollectorData>(assetPath);
-            }
-            else
-            {
-                string message = "存在多个" + nameof(AssetCollectorData) + "at";
-                foreach (var guid in guids)
-                {
-                    string assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                    message += "\r\n\t" + assetPath;
-                }
-                Debug.LogWarning(message);
-            }
+            _data = AssetCollectorData.GetData();
         }
 
         private void CreateGUI()
@@ -280,9 +259,6 @@ namespace ybwork.Assets.Editor
         {
             EditorUtility.SetDirty(_data);
             AssetDatabase.SaveAssets();
-
-            string aliasMap = JsonConvert.SerializeObject(_data.GetAssets(), Formatting.Indented);
-            File.WriteAllText(Application.dataPath + "/YueAssetAlias.json", aliasMap);
 
             Debug.Log("资源收集器保存成功");
         }

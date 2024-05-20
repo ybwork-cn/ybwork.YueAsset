@@ -2,19 +2,22 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 
-namespace ybwork.Assets.Editor
+#if UNITY_EDITOR
+
+using UnityEditor;
+
+namespace ybwork.Assets
 {
-    internal enum AssetCollectorItemStyle
+    public enum AssetCollectorItemStyle
     {
         FileName,
         GroupName_FileName,
     }
 
     [Serializable]
-    internal class AssetCollectorItemData
+    public class AssetCollectorItemData
     {
         public string AssetGUID;
         public AssetCollectorItemStyle AssetStyle;
@@ -82,7 +85,7 @@ namespace ybwork.Assets.Editor
                     return new AssetAlias
                     {
                         Name = name,
-                        BundleName = groupName,
+                        BundleName = groupName.ToLower() + ".ab",
                         AssetPath = path,
                     };
                 });
@@ -90,7 +93,7 @@ namespace ybwork.Assets.Editor
     }
 
     [Serializable]
-    internal class AssetCollectorGroupData
+    public class AssetCollectorGroupData
     {
         public string GroupName;
         public List<AssetCollectorItemData> Items = new();
@@ -107,7 +110,7 @@ namespace ybwork.Assets.Editor
     }
 
     [Serializable]
-    internal class AssetCollectorPackageData
+    public class AssetCollectorPackageData
     {
         public string PackageName;
         public List<AssetCollectorGroupData> Groups = new();
@@ -119,7 +122,7 @@ namespace ybwork.Assets.Editor
     }
 
     [CreateAssetMenu(menuName = "ybwork/Assets/AssetCollectorData")]
-    internal class AssetCollectorData : ScriptableObject
+    public class AssetCollectorData : ScriptableObject
     {
         public BuildTarget BuildTarget = BuildTarget.StandaloneWindows64;
         public string TargetPath;
@@ -131,5 +134,36 @@ namespace ybwork.Assets.Editor
                 packages => packages.PackageName,
                 packages => packages.GetAssets());
         }
+        public static AssetCollectorData GetData()
+        {
+            AssetCollectorData data;
+            string[] guids = AssetDatabase.FindAssets($"t:{typeof(AssetCollectorData).FullName}");
+            if (guids.Length == 0)
+            {
+                data = CreateInstance<AssetCollectorData>();
+                Directory.CreateDirectory("Assets/Settings/");
+                AssetDatabase.CreateAsset(data, "Assets/Settings/" + nameof(AssetCollectorData) + ".asset");
+            }
+            else if (guids.Length == 1)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(guids[0]);
+                data = AssetDatabase.LoadAssetAtPath<AssetCollectorData>(assetPath);
+            }
+            else
+            {
+                string message = "存在多个" + nameof(AssetCollectorData) + "，已自动选取第一个 at";
+                foreach (var guid in guids)
+                {
+                    message += "\r\n\t" + AssetDatabase.GUIDToAssetPath(guid);
+                }
+                Debug.LogWarning(message);
+
+                string assetPath = AssetDatabase.GUIDToAssetPath(guids[0]);
+                data = AssetDatabase.LoadAssetAtPath<AssetCollectorData>(assetPath);
+            }
+            return data;
+        }
+
     }
 }
+#endif

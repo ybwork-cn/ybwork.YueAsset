@@ -8,7 +8,8 @@ namespace ybwork.Assets
 {
     internal class AssetBundleDownloadHandler : IAsyncDownloadHandler
     {
-        long IAsyncDownloadHandler.DownloadedBytes => (long)_asyncOperation.webRequest.downloadedBytes;
+        long IAsyncDownloadHandler.DownloadedBytes => (long)(Math.Max(_downloadRequest.downloadProgress, 0) * Length);
+
         public long Length { get; }
         public IEnumerator Task { get; }
         public bool Completed { get; private set; } = false;
@@ -17,35 +18,19 @@ namespace ybwork.Assets
 
         public readonly string BundleName;
 
-        private readonly UnityWebRequestAsyncOperation _asyncOperation;
-        private readonly bool _cache;
-        private readonly string _cachePath;
+        private readonly UnityWebRequest _downloadRequest;
         protected Action _onComplete;
 
-        public AssetBundleDownloadHandler(string url, string packageName, string bundleName, long length, bool cache)
+        public AssetBundleDownloadHandler(string url, string packageName, string bundleName, BundleGroupInfo bundleGroupInfo)
         {
-            Length = length;
+            Length = bundleGroupInfo.Size;
+            Hash128 hash = Hash128.Parse(bundleGroupInfo.Hash);
             BundleName = bundleName;
-            bundleName = bundleName.ToLower() + ".ab";
-
-            _cache = cache;
-            _cachePath = Path.Combine(AssetMgr.PersistentDataPath, packageName, bundleName);
 
             string webPath = Path.Combine(url, packageName, bundleName);
 
-            UnityWebRequest request;
-            if (cache)
-            {
-                request = UnityWebRequest.Get(webPath);
-                DownloadHandlerFile handler = new DownloadHandlerFile(_cachePath);
-                request.downloadHandler = handler;
-                request.disposeDownloadHandlerOnDispose = true;
-            }
-            else
-            {
-                request = UnityWebRequestAssetBundle.GetAssetBundle(webPath);
-            }
-            _asyncOperation = request.SendWebRequest();
+            _downloadRequest = UnityWebRequestAssetBundle.GetAssetBundle(webPath, hash);
+
             Task = DownLoad();
         }
 
@@ -59,18 +44,9 @@ namespace ybwork.Assets
 
         private IEnumerator DownLoad()
         {
-            yield return _asyncOperation;
+            yield return _downloadRequest.SendWebRequest();
 
-            if (_cache)
-            {
-                var request = AssetBundle.LoadFromFileAsync(_cachePath);
-                yield return request;
-                AssetBundle = request.assetBundle;
-            }
-            else
-            {
-                AssetBundle = DownloadHandlerAssetBundle.GetContent(_asyncOperation.webRequest);
-            }
+            AssetBundle = DownloadHandlerAssetBundle.GetContent(_downloadRequest);
             _onComplete?.Invoke();
         }
     }

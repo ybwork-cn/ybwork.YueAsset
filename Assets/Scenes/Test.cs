@@ -5,17 +5,17 @@ using ybwork.Assets;
 
 public class Test : MonoBehaviour
 {
-    IAsyncDownloadHandler _initHandler;
+    IAsyncHandler _initHandler;
 
     IEnumerator Start()
     {
-        //#if UNITY_EDITOR
-        //_initHandler = AssetMgr.InitAsync_Editor();
-        //_initHandler = AssetMgr.InitAsync_Editor("https://ybwork.cn:12353/Bundles/alias.json");
-        //#else
+#if UNITY_EDITOR
+        _initHandler = AssetMgr.InitAsync_Editor();
+        //_initHandler = AssetMgr.InitAsync_Editor(Environment.CurrentDirectory + "/YueAssets/alias.json");
+#else
         //_initHandler = AssetMgr.InitAsync_Release("http://localhost:8080/");
         _initHandler = AssetMgr.InitAsync_Release(Environment.CurrentDirectory + "/YueAssets");
-        //#endif
+#endif
 
         yield return _initHandler.Task;
 
