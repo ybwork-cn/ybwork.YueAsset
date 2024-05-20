@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace ybwork.Assets
 {
@@ -35,13 +34,11 @@ namespace ybwork.Assets
 
         public MutiDownloadHandler InitAsync(string url)
         {
-            bool cache = Application.platform != RuntimePlatform.WebGLPlayer;
-
             var bundleNames = _alias.GroupBy(asset => asset.BundleName).Select(group => group.Key);
             foreach (var bundleName in bundleNames)
             {
-                long length = _groupInfos[bundleName.ToLower() + ".ab"].Size;
-                AssetBundleDownloadHandler downloadHandler = new(url, PackageName, bundleName, length, cache);
+                BundleGroupInfo bundleGroupInfo = _groupInfos[bundleName];
+                AssetBundleDownloadHandler downloadHandler = new(url, PackageName, bundleName, bundleGroupInfo);
                 downloadHandler.Then(() =>
                 {
                     _bundles[bundleName] = downloadHandler.AssetBundle;

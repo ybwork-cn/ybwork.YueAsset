@@ -52,7 +52,10 @@ namespace ybwork.Assets
 #if UNITY_EDITOR
         public static IAsyncHandler InitAsync_Editor()
         {
-            return InitAsync_Editor(Application.dataPath + "/YueAssetAlias.json");
+            AssetCollectorData collectorData = AssetCollectorData.GetData();
+            string aliasMap = JsonConvert.SerializeObject(collectorData.GetAssets(), Formatting.Indented);
+            InitEditor(aliasMap);
+            return new CompoletedAsyncHandler();
         }
 
         public static IAsyncHandler InitAsync_Editor(string alias_path)
@@ -60,17 +63,22 @@ namespace ybwork.Assets
             DownloadHandler aliasDownloadHandler = LoadAliasAsync(alias_path);
             aliasDownloadHandler.Then(() =>
             {
-                Dictionary<string, List<AssetAlias>> assetsAlias =
-                    JsonConvert.DeserializeObject<Dictionary<string, List<AssetAlias>>>(aliasDownloadHandler.ContentText);
-                _assetPackages.Clear();
-                foreach (var packageName in assetsAlias.Keys)
-                {
-                    AssetPackage_Editor package = new AssetPackage_Editor(packageName, assetsAlias[packageName]);
-                    _assetPackages.Add(packageName, package);
-                }
+                InitEditor(aliasDownloadHandler.ContentText);
             });
 
             return aliasDownloadHandler;
+        }
+
+        private static void InitEditor(string aliasMap)
+        {
+            Dictionary<string, List<AssetAlias>> assetsAlias =
+                                JsonConvert.DeserializeObject<Dictionary<string, List<AssetAlias>>>(aliasMap);
+            _assetPackages.Clear();
+            foreach (var packageName in assetsAlias.Keys)
+            {
+                AssetPackage_Editor package = new AssetPackage_Editor(packageName, assetsAlias[packageName]);
+                _assetPackages.Add(packageName, package);
+            }
         }
 #endif
 

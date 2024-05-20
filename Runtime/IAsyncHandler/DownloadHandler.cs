@@ -6,14 +6,14 @@ namespace ybwork.Assets
 {
     internal class DownloadHandler : IAsyncDownloadHandler
     {
-        long IAsyncDownloadHandler.DownloadedBytes => (long)_asyncOperation.webRequest.downloadedBytes;
+        long IAsyncDownloadHandler.DownloadedBytes => (long)_downloadRequest.downloadedBytes;
         long IAsyncDownloadHandler.Length
         {
             get
             {
                 if (_length == 0)
                 {
-                    string contentLength = _asyncOperation.webRequest.GetResponseHeader("Content-Length");
+                    string contentLength = _downloadRequest.GetResponseHeader("Content-Length");
                     long.TryParse(contentLength, out _length);
                 }
                 return _length;
@@ -23,16 +23,15 @@ namespace ybwork.Assets
         public bool Completed { get; private set; } = false;
 
         private long _length = 0;
-        public string ContentText => _asyncOperation.webRequest.downloadHandler.text;
-        public byte[] ContentData => _asyncOperation.webRequest.downloadHandler.data;
+        public string ContentText => _downloadRequest.downloadHandler.text;
+        public byte[] ContentData => _downloadRequest.downloadHandler.data;
         protected Action _onComplete;
 
-        private readonly UnityWebRequestAsyncOperation _asyncOperation;
+        private readonly UnityWebRequest _downloadRequest;
 
         public DownloadHandler(string url)
         {
-            UnityWebRequest request = UnityWebRequest.Get(url);
-            _asyncOperation = request.SendWebRequest();
+            _downloadRequest = UnityWebRequest.Get(url);
             Task = DownLoad();
         }
 
@@ -46,7 +45,7 @@ namespace ybwork.Assets
 
         private IEnumerator DownLoad()
         {
-            yield return _asyncOperation;
+            yield return _downloadRequest.SendWebRequest();
             Completed = true;
             _onComplete?.Invoke();
         }
