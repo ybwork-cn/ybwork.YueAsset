@@ -468,6 +468,14 @@ namespace ybwork.Assets.Editor
                 VisualElement elementItem = new VisualElement();
                 elementItem.style.flexDirection = FlexDirection.Row;
 
+                Image image = new Image();
+                image.image = AssetDatabase.GetCachedIcon(assetAlias.AssetPath);
+                image.style.alignSelf = Align.Center;
+                image.uv = new Rect(0, 0, 1, 1);
+                image.style.width = 16;
+                image.style.height = 16;
+                elementItem.Add(image);
+
                 TextField textField = new TextField();
                 textField.value = assetAlias.Name;
                 textField.textEdition.isReadOnly = true;
