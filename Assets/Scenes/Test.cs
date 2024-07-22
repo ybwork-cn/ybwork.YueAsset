@@ -11,7 +11,6 @@ public class Test : MonoBehaviour
     {
 #if UNITY_EDITOR
         _initHandler = AssetMgr.InitAsync_Editor();
-        //_initHandler = AssetMgr.InitAsync_Editor(Environment.CurrentDirectory + "/YueAssets/alias.json");
 #else
         //_initHandler = AssetMgr.InitAsync_Release("http://localhost:8080/");
         _initHandler = AssetMgr.InitAsync_Release(Environment.CurrentDirectory + "/YueAssets");

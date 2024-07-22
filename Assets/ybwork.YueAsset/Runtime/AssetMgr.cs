@@ -58,17 +58,6 @@ namespace ybwork.Assets
             return new CompoletedAsyncHandler();
         }
 
-        public static IAsyncHandler InitAsync_Editor(string alias_path)
-        {
-            DownloadHandler aliasDownloadHandler = LoadAliasAsync(alias_path);
-            aliasDownloadHandler.Then(() =>
-            {
-                InitEditor(aliasDownloadHandler.ContentText);
-            });
-
-            return aliasDownloadHandler;
-        }
-
         private static void InitEditor(string aliasMap)
         {
             Dictionary<string, List<AssetAlias>> assetsAlias =
