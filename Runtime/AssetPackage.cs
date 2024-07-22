@@ -68,7 +68,6 @@ namespace ybwork.Assets
 
             string path = _alias.First(alia => id == alia.Name).AssetPath;
             T result = _assetInBundles[id].LoadAsset<T>(path);
-            result.name = id;
 
             _assets[id] = result;
             return result;
@@ -95,7 +94,6 @@ namespace ybwork.Assets
                 throw new System.IndexOutOfRangeException("不存在的资源名称:" + id);
             }
             T result = UnityEditor.AssetDatabase.LoadAssetAtPath<T>(path);
-            result.name = id;
             return result;
         }
     }
