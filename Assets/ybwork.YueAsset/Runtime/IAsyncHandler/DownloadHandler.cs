@@ -1,53 +1,32 @@
 ﻿using System;
-using System.Collections;
 using UnityEngine.Networking;
 
 namespace ybwork.Assets
 {
-    internal class DownloadHandler : IAsyncDownloadHandler
+    internal class DownloadHandler : IAsyncHandlerDownload
     {
-        long IAsyncDownloadHandler.DownloadedBytes => (long)_downloadRequest.downloadedBytes;
-        long IAsyncDownloadHandler.Length
-        {
-            get
-            {
-                if (_length == 0)
-                {
-                    string contentLength = _downloadRequest.GetResponseHeader("Content-Length");
-                    long.TryParse(contentLength, out _length);
-                }
-                return _length;
-            }
-        }
-        public IEnumerator Task { get; }
-        public bool Completed { get; private set; } = false;
+        AsyncEvent IAsyncHandler.OnComplete { get; } = new();
+        float IAsyncHandlerDownload.Progress => _unityWebRequest.downloadProgress;
+        bool IAsyncHandler.Completed => _unityWebRequest.isDone;
 
-        private long _length = 0;
-        public string ContentText => _downloadRequest.downloadHandler.text;
-        public byte[] ContentData => _downloadRequest.downloadHandler.data;
-        protected Action _onComplete;
+        public string ContentText => _unityWebRequest.downloadHandler.text;
+        public byte[] ContentData => _unityWebRequest.downloadHandler.data;
 
-        private readonly UnityWebRequest _downloadRequest;
+        private readonly UnityWebRequest _unityWebRequest;
 
         public DownloadHandler(string url)
         {
-            _downloadRequest = UnityWebRequest.Get(url);
-            Task = DownLoad();
+            _unityWebRequest = UnityWebRequest.Get(url);
+            var webRequestAsyncOperation = _unityWebRequest.SendWebRequest();
+            webRequestAsyncOperation.completed += (_) =>
+            {
+                this.OnCompleted();
+            };
         }
 
-        public void Then(Action action)
+        public void Then(Action<DownloadHandler> action)
         {
-            if (Completed)
-                action?.Invoke();
-            else
-                _onComplete += action;
-        }
-
-        private IEnumerator DownLoad()
-        {
-            yield return _downloadRequest.SendWebRequest();
-            Completed = true;
-            _onComplete?.Invoke();
+            this.Then(() => action?.Invoke(this));
         }
     }
 }

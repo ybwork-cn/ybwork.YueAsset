@@ -22,6 +22,9 @@ dotnet_diagnostic.IDE0090.severity = silent
 # IDE0220: 添加显式转换
 dotnet_diagnostic.IDE0220.severity = warning
 
+# IDE0270: 使用 COALESCE 表达式
+dotnet_diagnostic.IDE0270.severity = silent
+
 # UNT0008: Null propagation on Unity objects
 dotnet_diagnostic.UNT0008.severity = warning
 

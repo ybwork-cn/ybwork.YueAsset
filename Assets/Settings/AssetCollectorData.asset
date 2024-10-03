@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: AssetCollectorData
   m_EditorClassIdentifier: 
   BuildTarget: 19
-  TargetPath: E:/Tao/Desktop/Coding/ybwork.YueAsset/YueAssets
+  TargetPath: D:/Tao/Desktop/Coding/Unity/ybwork.YueAssets/YueAssets
   Packages:
   - PackageName: DefaultPackage
     Groups:

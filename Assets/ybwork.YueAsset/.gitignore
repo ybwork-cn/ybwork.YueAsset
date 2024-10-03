@@ -3,6 +3,7 @@
 /Temp/
 /UserSettings/
 /obj/
+/Release/
 
 /.vs/
 /.vsconfig
@@ -11,4 +12,4 @@
 /*.sln
 
 /YueAssets/
-/Release/
+/BundleCache/
