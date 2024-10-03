@@ -102,6 +102,12 @@ namespace ybwork.Assets
             return _defaultAssetPackage.LoadAssetSync<T>(id);
         }
 
+        public static void LoadAssetAsync<T>(string id, UnityAction<T> callback) where T : Object
+        {
+            CheckDefaultPackage();
+            _defaultAssetPackage.LoadAssetAsync(id, callback);
+        }
+
         private static DownloadHandler LoadAliasAsync(string alias_url)
         {
             return new DownloadHandler(alias_url);
