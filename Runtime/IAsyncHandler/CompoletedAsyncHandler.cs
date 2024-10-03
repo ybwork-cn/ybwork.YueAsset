@@ -1,19 +1,9 @@
-﻿using System;
-using System.Collections;
-
-namespace ybwork.Assets
+﻿namespace ybwork.Assets
 {
-    public class CompoletedAsyncHandler : IAsyncHandler
+    internal class CompoletedAsyncHandler : IAsyncHandlerDownload
     {
-        public float Progress => 1;
-
-        public IEnumerator Task => null;
-
-        public bool Completed => true;
-
-        public void Then(Action action)
-        {
-            action?.Invoke();
-        }
+        AsyncEvent IAsyncHandler.OnComplete { get; } = new();
+        public bool Completed { get; } = true;
+        float IAsyncHandlerDownload.Progress => 1;
     }
 }

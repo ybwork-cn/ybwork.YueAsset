@@ -1,6 +1,9 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace ybwork.Assets
 {
@@ -15,42 +18,48 @@ namespace ybwork.Assets
         /// </summary>
         /// <param name="url">资源包文件夹URL</param>
         /// <returns></returns>
-        public static IAsyncDownloadHandler InitAsync_Release(string url)
+        public static IAsyncHandlerDownload InitAsync_Release(string url)
         {
-            DownloadHandler aliasDownloadHandler = LoadAliasAsync(url + "/alias.json");
-            DownloadHandler catalogDownloadHandler = LoadAliasAsync(url + "/catalog.json");
-            MutiDownloadHandler mutiAsyncHandler = new MutiDownloadHandler();
-            mutiAsyncHandler.AddDependency(aliasDownloadHandler);
-            mutiAsyncHandler.AddDependency(catalogDownloadHandler);
-            mutiAsyncHandler.Start();
-
-            MutiDownloadHandler initAsyncHandler = new MutiDownloadHandler(mutiAsyncHandler);
-
-            mutiAsyncHandler.Then(() =>
+            // 先下载目录文件
+            Dictionary<string, List<AssetAlias>> assetsAlias = null;
+            MutiDownloadHandler mutiDownloadHandler = new MutiDownloadHandler();
+            LoadAliasAsync(url + "/alias.json").Then((handler) =>
             {
-                Dictionary<string, Dictionary<string, BundleGroupInfo>> packgeInfos =
-                    JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, BundleGroupInfo>>>(catalogDownloadHandler.ContentText);
-
-                Dictionary<string, List<AssetAlias>> assetsAlias =
-                    JsonConvert.DeserializeObject<Dictionary<string, List<AssetAlias>>>(aliasDownloadHandler.ContentText);
-                _assetPackages.Clear();
-                foreach (var packageAlias in assetsAlias)
+                string json = handler.ContentText;
+                assetsAlias = JsonConvert.DeserializeObject<Dictionary<string, List<AssetAlias>>>(json);
+                foreach (var packageInfo in assetsAlias)
                 {
-                    string packageName = packageAlias.Key;
-                    AssetPackage_Release package = new AssetPackage_Release(packageName, assetsAlias[packageName], packgeInfos[packageName]);
-                    _assetPackages.Add(packageName, package);
-
-                    var packageDownloadHandler = package.InitAsync(url);
-                    initAsyncHandler.AddDependency(packageDownloadHandler);
+                    string packageName = packageInfo.Key;
+                    var groupNames = packageInfo.Value
+                        .GroupBy(alia => alia.BundleName)
+                        .Select(group => group.Key);
+                    foreach (var groupName in groupNames)
+                    {
+                        string webPath = Path.Combine(url, packageName, groupName);
+                        string filename = Path.Combine("BundleCache", groupName);
+                        DiskFileDownloadHandler downloadHandler = new(webPath, filename);
+                        mutiDownloadHandler.AddDependency(downloadHandler);
+                    }
                 }
-                initAsyncHandler.Start();
+                mutiDownloadHandler.Start();
             });
-
-            return initAsyncHandler;
+            mutiDownloadHandler.Then(() =>
+            {
+                // 所有AB包下载完成后，创建AssetPackage
+                // AB包的加载要在实际加载资源时延迟加载
+                _defaultAssetPackage = null;
+                _assetPackages.Clear();
+                foreach (var packageInfo in assetsAlias)
+                {
+                    string packageName = packageInfo.Key;
+                    _assetPackages[packageName] = new AssetPackage_Release(packageName, assetsAlias[packageName]);
+                }
+            });
+            return mutiDownloadHandler;
         }
 
 #if UNITY_EDITOR
-        public static IAsyncHandler InitAsync_Editor()
+        public static IAsyncHandlerDownload InitAsync_Editor()
         {
             AssetCollectorData collectorData = AssetCollectorData.GetData();
             string aliasMap = JsonConvert.SerializeObject(collectorData.GetAssets(), Formatting.Indented);
@@ -62,6 +71,7 @@ namespace ybwork.Assets
         {
             Dictionary<string, List<AssetAlias>> assetsAlias =
                                 JsonConvert.DeserializeObject<Dictionary<string, List<AssetAlias>>>(aliasMap);
+            _defaultAssetPackage = null;
             _assetPackages.Clear();
             foreach (var packageName in assetsAlias.Keys)
             {
@@ -74,6 +84,10 @@ namespace ybwork.Assets
         public static void SetDefaultPackage(string defaultPackageName)
         {
             _defaultAssetPackage = GetPackage(defaultPackageName);
+            if (_defaultAssetPackage != null)
+                Debug.Log("默认资源包：" + defaultPackageName);
+            else
+                Debug.LogError("资源包不存在：" + defaultPackageName);
         }
 
         public static AssetPackage GetPackage(string packageName)

@@ -1,59 +1,48 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace ybwork.Assets
 {
-    internal class MutiDownloadHandler : IAsyncDownloadHandler
+    internal class MutiDownloadHandler : IAsyncHandlerDownload
     {
-        long IAsyncDownloadHandler.DownloadedBytes => _handlers.Sum(downloadHandler => downloadHandler.DownloadedBytes);
-        long IAsyncDownloadHandler.Length => _length;
-        public IEnumerator Task => _task;
+        AsyncEvent IAsyncHandler.OnComplete { get; } = new();
+        float IAsyncHandlerDownload.Progress => _handlers.Count == 0 ? 1 : _handlers.Sum(handler => handler.Progress) / _handlers.Count;
         public bool Completed { get; private set; } = false;
 
-        private readonly List<IAsyncDownloadHandler> _handlers = new();
-        private readonly IEnumerator _task;
-        private bool _started = false;
-        private readonly IEnumerator _preTask;
-        protected Action _onComplete;
-        private long _length;
+        private readonly List<IAsyncHandlerDownload> _handlers = new();
 
-        public MutiDownloadHandler(IAsyncHandler preTask = null)
-        {
-            _preTask = preTask?.Task;
-            _task = WhenAll();
-        }
+        private bool _isStarted = false;
 
-        public void Start()
-        {
-            _started = true;
-            _length = _handlers.Sum(downloadHandler => downloadHandler.Length);
-        }
+        public MutiDownloadHandler() { }
 
-        public void AddDependency(IAsyncDownloadHandler handler)
+        public void AddDependency(IAsyncHandlerDownload handler)
         {
             _handlers.Add(handler);
         }
 
-        public void Then(Action action)
+        public void Start()
         {
-            if (Completed)
-                action?.Invoke();
-            else
-                _onComplete += action;
+            if (_isStarted)
+                throw new NotImplementedException("不允许重复调用Start");
+
+            _isStarted = true;
+            foreach (IAsyncHandler handler in _handlers)
+            {
+                handler.Then(OnDependencyCompleted);
+            }
         }
 
-        private IEnumerator WhenAll()
+        private void OnDependencyCompleted()
         {
-            yield return _preTask;
-            while (!_started)
-                yield return null;
-            foreach (IEnumerator item in _handlers.Select(handler => handler.Task))
+            if (Completed)
+                return;
+            int unCompeletedCount = _handlers.Count(h => !h.Completed);
+            if (unCompeletedCount <= 0)
             {
-                yield return item;
+                Completed = true;
+                this.OnCompleted();
             }
-            _onComplete?.Invoke();
         }
     }
 }
