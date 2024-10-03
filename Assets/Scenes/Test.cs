@@ -18,8 +18,18 @@ public class Test : MonoBehaviour
         _initHandler.Then(() =>
         {
             AssetMgr.SetDefaultPackage("DefaultPackage");
-            Instantiate(AssetMgr.LoadAssetSync<GameObject>("AA_Cube"));
-            Instantiate(AssetMgr.GetPackage("aa").LoadAssetSync<GameObject>("Capsule"));
+            AssetMgr.LoadAssetAsync<GameObject>("AA_Cube", prefab =>
+            {
+                Instantiate(prefab);
+                Debug.Log("AA_Cube加载完成");
+            });
+            AssetMgr.GetPackage("aa").LoadAssetAsync<GameObject>("Capsule", prefab =>
+            {
+                Instantiate(prefab);
+                Debug.Log("Capsule加载完成");
+            });
+            //Instantiate(AssetMgr.LoadAssetSync<GameObject>("AA_Cube"));
+            //Instantiate(AssetMgr.GetPackage("aa").LoadAssetSync<GameObject>("Capsule"));
 
             Debug.Log("启动完成");
         });
